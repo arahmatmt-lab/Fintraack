@@ -42,7 +42,15 @@ app.use((req, res, next) => {
 
 app.use('/api', apiRouter);
 
-const publicDir = path.join(__dirname, 'public');
+function resolvePublicDir() {
+  const candidates = [
+    path.join(__dirname, 'public'),
+    path.join(process.cwd(), 'public')
+  ];
+  return candidates.find((dir) => fs.existsSync(path.join(dir, 'index.html'))) || candidates[0];
+}
+
+const publicDir = resolvePublicDir();
 app.use(express.static(publicDir, {
   setHeaders(res, filePath) {
     if (filePath.endsWith('sw.js') || filePath.endsWith('manifest.json')) {
@@ -52,11 +60,29 @@ app.use(express.static(publicDir, {
 }));
 
 // SPA fallback
-app.use((req, res, next) => {
+app.use((req, res) => {
   if (req.path.startsWith('/api')) {
     return res.status(404).json({ ok: false, error: 'Endpoint API tidak ditemukan.' });
   }
-  res.sendFile(path.join(publicDir, 'index.html'));
+  const indexPath = path.join(publicDir, 'index.html');
+  if (!fs.existsSync(indexPath)) {
+    return res.status(404).send('Halaman utama tidak ditemukan.');
+  }
+  res.sendFile(indexPath, (err) => {
+    if (err && !res.headersSent) {
+      res.status(err.statusCode || 500).send('Gagal memuat halaman aplikasi.');
+    }
+  });
+});
+
+// Error boundary agar serverless function tidak crash tanpa respons terstruktur
+app.use((err, req, res, _next) => {
+  if (res.headersSent) return;
+  const status = err?.status || err?.statusCode || 500;
+  if (req.path.startsWith('/api')) {
+    return res.status(status).json({ ok: false, error: err?.message || 'Terjadi kesalahan pada server.' });
+  }
+  res.status(status).send('Terjadi kesalahan pada server.');
 });
 
 function getLanUrls(port) {

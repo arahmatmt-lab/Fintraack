@@ -153,7 +153,28 @@ test('Endpoint API Server merespons sesuai arsitektur keamanan', async () => {
     assert.equal(goodLoginJson.ok, true);
     assert.ok(goodLoginJson.token);
     try { fs.unlinkSync(getStorePath()); } catch {}
+
+    // Halaman utama SPA harus merespons 200 OK tanpa error 500
+    const homeRes = await fetch(`${baseUrl}/`);
+    assert.equal(homeRes.status, 200);
   } finally {
     await new Promise((resolve) => server.close(resolve));
+  }
+});
+
+test('Storage resolver otomatis memakai temp directory pada runtime serverless seperti Vercel', () => {
+  const os = require('node:os');
+  const path = require('node:path');
+  const { resolveWritableDataDir, resetCachedDataDir } = require('../backend/storageDir');
+  const prevVercel = process.env.VERCEL;
+  try {
+    process.env.VERCEL = '1';
+    resetCachedDataDir();
+    const resolved = resolveWritableDataDir();
+    assert.equal(resolved, path.join(os.tmpdir(), 'fintrack-data'));
+  } finally {
+    if (prevVercel === undefined) delete process.env.VERCEL;
+    else process.env.VERCEL = prevVercel;
+    resetCachedDataDir();
   }
 });

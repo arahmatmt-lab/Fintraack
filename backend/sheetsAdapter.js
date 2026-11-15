@@ -7,9 +7,15 @@
 const fs = require('fs');
 const path = require('path');
 const { SHEETS_SCHEMA } = require('./schema');
+const { resolveDataFile, resolveWritableDataDir } = require('./storageDir');
 
-const DATA_DIR = path.join(__dirname, 'data');
-const STORE_PATH = path.join(DATA_DIR, 'fintrack_store.json');
+function createEmptyStoreObject() {
+  const initial = {};
+  for (const sheetName of Object.keys(SHEETS_SCHEMA)) {
+    initial[sheetName] = [];
+  }
+  return initial;
+}
 
 class SheetsAdapter {
   constructor() {
@@ -24,16 +30,26 @@ class SheetsAdapter {
     this.ensureStore();
   }
 
+  getStorePath() {
+    return resolveDataFile('fintrack_store.json');
+  }
+
   ensureStore() {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
-    }
-    if (!fs.existsSync(STORE_PATH)) {
-      const initial = {};
-      for (const sheetName of Object.keys(SHEETS_SCHEMA)) {
-        initial[sheetName] = [];
+    try {
+      const dataDir = resolveWritableDataDir();
+      const storePath = path.join(dataDir, 'fintrack_store.json');
+      if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, { recursive: true });
       }
-      fs.writeFileSync(STORE_PATH, JSON.stringify(initial, null, 2), 'utf8');
+      if (!fs.existsSync(storePath)) {
+        fs.writeFileSync(storePath, JSON.stringify(createEmptyStoreObject(), null, 2), 'utf8');
+      }
+      return true;
+    } catch (err) {
+      if (this.appsScriptUrl && this.appsScriptSecret) {
+        return false;
+      }
+      throw err;
     }
   }
 
@@ -48,24 +64,30 @@ class SheetsAdapter {
   }
 
   readAll() {
-    this.ensureStore();
+    const ready = this.ensureStore();
+    if (!ready) return createEmptyStoreObject();
     try {
-      const raw = fs.readFileSync(STORE_PATH, 'utf8');
+      const raw = fs.readFileSync(this.getStorePath(), 'utf8');
       const parsed = JSON.parse(raw);
       for (const sheetName of Object.keys(SHEETS_SCHEMA)) {
         if (!Array.isArray(parsed[sheetName])) parsed[sheetName] = [];
       }
       return parsed;
     } catch {
-      const empty = {};
-      for (const sheetName of Object.keys(SHEETS_SCHEMA)) empty[sheetName] = [];
-      return empty;
+      return createEmptyStoreObject();
     }
   }
 
   writeAll(data) {
-    this.ensureStore();
-    fs.writeFileSync(STORE_PATH, JSON.stringify(data, null, 2), 'utf8');
+    try {
+      const ready = this.ensureStore();
+      if (!ready) return;
+      fs.writeFileSync(this.getStorePath(), JSON.stringify(data, null, 2), 'utf8');
+    } catch (err) {
+      if (!(this.appsScriptUrl && this.appsScriptSecret)) {
+        throw err;
+      }
+    }
   }
 
   /**

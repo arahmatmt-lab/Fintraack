@@ -8,7 +8,7 @@ const express = require('express');
 const { SHEETS_SCHEMA } = require('./schema');
 const { SheetsAdapter } = require('./sheetsAdapter');
 const { createLocalToken, requireAuth } = require('./authMiddleware');
-const { registerUser, loginUser } = require('./authService');
+const { registerUserWithSync, loginUserWithSync } = require('./authService');
 const { analyzeReceipt } = require('./geminiReceiptService');
 
 const router = express.Router();
@@ -32,9 +32,9 @@ router.get('/schema', (req, res) => {
   });
 });
 
-router.post('/auth/register', (req, res) => {
+router.post('/auth/register', async (req, res) => {
   try {
-    const user = registerUser(req.body || {});
+    const user = await registerUserWithSync(req.body || {}, sheets);
     const token = createLocalToken({
       user_id: user.user_id,
       email: user.email,
@@ -46,9 +46,9 @@ router.post('/auth/register', (req, res) => {
   }
 });
 
-router.post('/auth/login', (req, res) => {
+router.post('/auth/login', async (req, res) => {
   try {
-    const user = loginUser(req.body || {});
+    const user = await loginUserWithSync(req.body || {}, sheets);
     const token = createLocalToken({
       user_id: user.user_id,
       email: user.email,
