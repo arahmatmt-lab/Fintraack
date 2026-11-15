@@ -1,0 +1,20 @@
+{
+  "name": "FINTRACK — Personal Finance Management",
+  "short_name": "FINTRACK",
+  "description": "Aplikasi pengelolaan keuangan pribadi mobile-first dengan tema Neumorphism & Glassmorphism.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#142B4A",
+  "background_color": "#F8FAFC",
+  "lang": "id-ID",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
