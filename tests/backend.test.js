@@ -178,3 +178,13 @@ test('Storage resolver otomatis memakai temp directory pada runtime serverless s
     resetCachedDataDir();
   }
 });
+
+test('mergeAuthUsers memprioritaskan data terbaru dari cloud jika ada username duplikat', () => {
+  const { mergeAuthUsers } = require('../backend/authService');
+  const local = [{ user_id: 'usr_old', username: 'rahmat', password_hash: 'old_salt:old_hash' }];
+  const remote = [{ user_id: 'usr_new', username: 'rahmat', password_hash: 'new_salt:new_hash' }];
+  const merged = mergeAuthUsers(local, remote);
+  assert.equal(merged.length, 1);
+  assert.equal(merged[0].user_id, 'usr_new');
+  assert.equal(merged[0].password_hash, 'new_salt:new_hash');
+});

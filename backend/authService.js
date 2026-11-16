@@ -160,13 +160,13 @@ function hasRemoteAuthBackend(sheetsAdapter) {
 }
 
 function mergeAuthUsers(localUsers, remoteUsers) {
-  const byId = new Map();
-  for (const u of [...remoteUsers, ...localUsers]) {
-    if (u && u.user_id && u.password_hash) {
-      byId.set(u.user_id, u);
-    }
+  const byIdent = new Map();
+  for (const u of [...localUsers, ...remoteUsers]) {
+    if (!u || !u.user_id || !u.password_hash) continue;
+    const key = normalizeIdentifier(u.username || u.email) || u.user_id;
+    byIdent.set(key, u);
   }
-  return Array.from(byId.values());
+  return Array.from(byIdent.values());
 }
 
 async function pullRemoteAuthUsers(sheetsAdapter) {
@@ -243,6 +243,7 @@ module.exports = {
   registerUserWithSync,
   loginUserWithSync,
   pushRemoteAuthUsers,
+  mergeAuthUsers,
   ensureAuthStore,
   getStorePath
 };
