@@ -255,6 +255,18 @@ export const db = {
     return store.Users;
   },
 
+  removeLocalUser(userId) {
+    const activeUid = this.getSessionUserId();
+    if (!userId || userId === activeUid) {
+      throw new Error('Akun yang sedang aktif tidak bisa dihapus dari daftar.');
+    }
+    const store = loadStore();
+    for (const sheet of Object.keys(SHEETS_COLUMNS)) {
+      store[sheet] = (store[sheet] || []).filter((r) => !(r && r.user_id === userId));
+    }
+    saveStore(store);
+  },
+
   async loginWithBackend({ username, email, password }) {
     const cleanIdent = String(username || email || '').trim().toLowerCase();
     const rawPass = String(password || '');

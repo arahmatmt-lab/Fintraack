@@ -1357,16 +1357,19 @@ function renderProfilSub(body, ctx) {
               ${users.map((u) => {
                 const isActive = u.user_id === user?.user_id;
                 return `
-                  <button type="button" class="account-switch-item ${isActive ? 'is-active' : ''}" data-switch-uid="${esc(u.user_id)}">
-                    <div class="setting-lead">
-                      <span class="account-avatar-sm">${esc(getInitials(u.name))}</span>
-                      <div style="min-width:0;">
-                        <div class="setting-title" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(u.name)}</div>
-                        <div class="setting-desc" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(u.username || u.email)}</div>
+                  <div class="account-switch-row">
+                    <button type="button" class="account-switch-item ${isActive ? 'is-active' : ''}" data-switch-uid="${esc(u.user_id)}">
+                      <div class="setting-lead">
+                        <span class="account-avatar-sm">${esc(getInitials(u.name))}</span>
+                        <div style="min-width:0;">
+                          <div class="setting-title" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(u.name)}</div>
+                          <div class="setting-desc" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(u.username || u.email)}</div>
+                        </div>
                       </div>
-                    </div>
-                    ${isActive ? '<span class="badge badge-emerald">Aktif</span>' : '<span class="badge badge-blue">Masuk</span>'}
-                  </button>
+                      ${isActive ? '<span class="badge badge-emerald">Aktif</span>' : '<span class="badge badge-blue">Masuk</span>'}
+                    </button>
+                    ${!isActive ? `<button type="button" class="btn-glass-danger btn-sm account-del-btn" data-remove-local-uid="${esc(u.user_id)}" title="Hapus akun dari daftar perangkat ini" aria-label="Hapus ${esc(u.name)} dari daftar perangkat">${icon('trash')}</button>` : ''}
+                  </div>
                 `;
               }).join('')}
             </div>
@@ -1453,6 +1456,19 @@ function renderProfilSub(body, ctx) {
       await db.pullFromBackend(uid);
       showToast('Berhasil beralih akun.', 'success');
       ctx.refresh();
+    });
+  });
+
+  body.querySelectorAll('[data-remove-local-uid]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const uid = btn.getAttribute('data-remove-local-uid');
+      try {
+        db.removeLocalUser(uid);
+        showToast('Akun dihapus dari daftar perangkat ini.', 'info');
+        ctx.refresh();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
     });
   });
 

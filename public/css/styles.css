@@ -1749,6 +1749,27 @@ input[type="time"].neu-input::-webkit-date-and-time-value {
   gap: 14px;
 }
 
+.account-switch-row {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.account-switch-row .account-switch-item {
+  flex: 1;
+  min-width: 0;
+}
+
+.account-del-btn {
+  flex-shrink: 0;
+  width: 42px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+}
+
 .account-switch-item {
   width: 100%;
   display: flex;
@@ -1899,6 +1920,7 @@ input[type="time"].neu-input::-webkit-date-and-time-value {
 .menu-tile,
 .sync-tile-btn,
 .glass-pill,
+.account-del-btn,
 .account-switch-item {
   position: relative;
   overflow: hidden;
